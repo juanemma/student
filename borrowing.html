@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Borrowed Books</title>
+<style>
+    body { font-family: Arial, sans-serif; margin:0; background:#f7f7f7; }
+    .words{ background:#002a01; padding:15px; display:flex; align-items:center; gap:15px; color:white; }
+    .words img{ width:100px; height:100px; }
+    .words p{ margin: 0; }
+    .nav1{ background:#006800; display:flex; padding:10px; gap:20px; }
+    .nav1 a{ color:white; text-decoration:none; font-weight:bold; }
+    .nav1 a:hover{ color:black; }
+    .container{ max-width:1000px; margin:20px auto; padding:10px; }
+    .book-card{ display:flex; gap:15px; background:white; padding:15px; border-radius:10px; box-shadow:0 2px 6px rgba(0,0,0,0.1); margin-bottom:15px; }
+    .book-card img{ width:120px; height:160px; object-fit:cover; border-radius:6px; }
+    .book-info{ flex:1; }
+
+    .status{ display:inline-block; padding:4px 8px; border-radius:6px; font-size:12px; font-weight:bold; margin-top:5px; }
+    .overdue{ background:#fee2e2; color:#b91c1c; }
+    .due-soon{ background:#fef3c7; color:#b45309; }
+    .on-loan{ background:#dcfce7; color:#15803d; }
+    .pending{ background:#c7d2fe; color:#1e40af; }
+
+    .pay-btn{
+        margin-top:10px;
+        padding:8px 12px;
+        background:#ff6600;
+        color:white;
+        border:none;
+        cursor:pointer;
+        border-radius:6px;
+        font-size:14px;
+        font-weight:bold;
+    }
+    .pay-btn:hover{
+        background:#cc5200;
+    }
+</style>
+</head>
+<body>
+
+<div class="words" style="font-family: 'Times New Roman', Times, serif;">
+    <img src="LMS IMG/logo.jpg" alt="Logo">
+    <div>
+        <h1>Mountain Province State University</h1>
+        <p>Bontoc Campus</p>
+        <p>Library</p>
+    </div>
+</div>
+
+<nav class="nav1">
+    <a href="home.html">HOME</a>
+    <a href="bookpage.html">BOOK</a>
+    <a href="borrowing.html">BOOKS BORROWED</a>
+</nav>
+
+<div class="container">
+    <h2 style="margin-bottom:15px;">My Borrowed Books</h2>
+    <div id="borrowedBooksContainer"></div>
+    <p id="emptyMessage" style="text-align:center; color:#555; display:none;">No borrowed books currently.</p>
+</div>
+
+<script>
+const borrowedBooks = [
+    {title:"Criminal Investigation", author:"Charles R. Swanson", image:"bookpage/crim inves.jpg", due:"2025-11-18"},
+    {title:"Programming Fundamentals", author:"Joyce Farrell", image:"bookpage/pf.png", due:"2025-11-22"},
+    {title:"Medical-Surgical Nursing", author:"Ignatavicius & Workman", image:"bookpage/msn.jpg", due:"2025-11-16"},
+    // Pending Approval Book
+    {title:"Introduction to Information Technology", author:"John Doe", image:"it/it1.jpg", status:"pending"}
+];
+
+function getBookStatus(book){
+    if(book.status === "pending"){
+        return { text:"Pending Approval", class:"pending", overdue:false };
+    }
+
+    const today = new Date();
+    const due = new Date(book.due);
+    const diffTime = due - today;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if(diffDays < 0){
+        return { text: `OVERDUE (${Math.abs(diffDays)} day${Math.abs(diffDays) !== 1 ? 's' : ''})`, class:"overdue", overdue:true };
+    } else if(diffDays === 0){
+        return { text:"DUE TODAY", class:"due-soon", overdue:false };
+    } else if(diffDays <= 3){
+        return { text:`Due in ${diffDays} day${diffDays !== 1 ? 's' : ''}`, class:"due-soon", overdue:false };
+    } else {
+        return { text:"On Loan", class:"on-loan", overdue:false };
+    }
+}
+
+function renderBorrowedBooks(){
+    const container = document.getElementById('borrowedBooksContainer');
+    const emptyMessage = document.getElementById('emptyMessage');
+
+    if(borrowedBooks.length === 0){
+        emptyMessage.style.display = "block";
+        return;
+    }
+
+    borrowedBooks.forEach((book, index)=>{
+        const status = getBookStatus(book);
+        const dueDate = book.due ? new Date(book.due).toLocaleDateString('en-US', {year:'numeric', month:'short', day:'numeric'}) : "N/A";
+
+        let payButtonHTML = "";
+
+        // Show Pay button only if overdue
+        if(status.overdue){
+            payButtonHTML = `<button class="pay-btn" onclick="payFine(${index})">Pay Fine</button>`;
+        }
+
+        const card = document.createElement('div');
+        card.className = 'book-card';
+        card.innerHTML = `
+            <img src="${book.image}" alt="${book.title}">
+            <div class="book-info">
+                <h3 style="margin:0;">${book.title}</h3>
+                <p style="margin:5px 0;"><b>Author:</b> ${book.author}</p>
+                <p style="margin:5px 0;"><b>Due Date:</b> ${dueDate}</p>
+                <span class="status ${status.class}">${status.text}</span>
+                ${payButtonHTML}
+            </div>
+        `;
+        container.appendChild(card);
+    });
+}
+
+// NEW — redirect to payment.html
+function payFine(index){
+    const book = borrowedBooks[index];
+    const url = `payment.html?title=${encodeURIComponent(book.title)}&due=${book.due}`;
+    window.location.href = url;
+}
+
+renderBorrowedBooks();
+</script>
+
+</body>
+</html>
